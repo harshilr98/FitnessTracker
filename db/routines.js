@@ -98,7 +98,7 @@ async function getPublicRoutinesByActivity({ id }) {
 async function updateRoutine({ id, ...fields }) {
   try {
     const { rows: [routine]} = await client.query(`
-    UPDATE activities
+    UPDATE routines
     SET name=$1, goal=$2
     WHERE id=$3
     RETURNING *
