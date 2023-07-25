@@ -57,31 +57,62 @@ async function getActivityByName(name) {
 }
 
 // used as a helper inside db/routines.js
-async function attachActivitiesToRoutines(routines) {
-}
-
-async function updateActivity({ id, ...fields }) {
-  // don't try to update the id
-  // do update the name and description
-  // return the updated activity
+//{ routineId, activityId, count, duration }
+async function addActivityToRoutines(routines) {
+  const { routineId, activityId, count, duration } = routines;
   try {
-    const { rows: [activity] } = await client.query(`
-    UPDATE activities
-    SET name=$1, description=$2
-    WHERE id=$3
-    RETURNING *
-    `, [fields.name, fields.description, id])
-    return activity;
+    const {rows: [routineActivity]} = client.query(`
+    INSERT INTO routine_activities("routineId", "activityId", count, duration)
+    VALUES ($1, $2, $3, $4)
+    ON CONFLICT ("routineId", "activityId") DO NOTHING;
+  `, [routineId, activityId, count, duration]);
+  return routineActivity;
   } catch (error) {
     console.error(error);
   }
 }
 
+async function updateActivity({ id, ...fields }) {
+  const name = fields.name;
+  const description = fields.description;
+
+  try {
+    if (name !== undefined && description !== undefined) {
+      const {rows: [activity]} = await client.query(`
+        UPDATE activities
+        SET name=$1, description=$2
+        WHERE id=$3
+        RETURNING *
+      `, [name, description, id]);
+      return activity;
+    } else if (name !== undefined) {
+      const {rows: [activity]} = await client.query(`
+        UPDATE activities
+        SET name=$1
+        WHERE id=$2
+        RETURNING *
+      `, [name, id]);
+      return activity;
+    } else if (description !== undefined) {
+      const {rows: [activity]} = await client.query(`
+        UPDATE activities
+        SET description=$1
+        WHERE id=$2
+        RETURNING *
+      `, [description, id]);
+      return activity;
+    }
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+
 module.exports = {
   getAllActivities,
   getActivityById,
   getActivityByName,
-  attachActivitiesToRoutines,
+  addActivityToRoutines,
   createActivity,
   updateActivity,
 };
