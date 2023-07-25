@@ -28,9 +28,10 @@ async function getRoutineById(id) {
 
 async function getRoutinesWithoutActivities() {
   try {
-    const { rows: [routine]} = await client.query(`
-
+    const { rows: [routines]} = await client.query(`
+      SELECT * FROM routines
     ;`)
+    return routines;
   } catch (error) {
     console.error(error)
   }
@@ -39,7 +40,7 @@ async function getRoutinesWithoutActivities() {
 async function getAllRoutines() {
   try {
     const { rows: routines} = await client.query(`
-      SELECT * FROM routines
+      SELECT * FROM routine_activities
     ;`)
     return routines;
   } catch (error) {
@@ -112,7 +113,7 @@ async function updateRoutine({ id, ...fields }) {
 async function destroyRoutine(id) {
   try {
     const { rows: [routine]} = await client.query(`
-    DELETE * FROM routines
+    DELETE FROM routines
     WHERE id=$1
     ;`, [id])
     return routine;

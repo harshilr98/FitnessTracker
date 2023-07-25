@@ -133,7 +133,7 @@ describe("DB Routines", () => {
         objectContaining({
           id: expect.any(Number),
           creatorId: routine.creatorId,
-          isPublic: routine.isPublic,
+          public: routine.public,
           name: routine.name,
           goal: routine.goal,
         })

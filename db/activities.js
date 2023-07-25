@@ -57,19 +57,9 @@ async function getActivityByName(name) {
 }
 
 // used as a helper inside db/routines.js
-//{ routineId, activityId, count, duration }
-async function addActivityToRoutines(routines) {
-  const { routineId, activityId, count, duration } = routines;
-  try {
-    const {rows: [routineActivity]} = client.query(`
-    INSERT INTO routine_activities("routineId", "activityId", count, duration)
-    VALUES ($1, $2, $3, $4)
-    ON CONFLICT ("routineId", "activityId") DO NOTHING;
-  `, [routineId, activityId, count, duration]);
-  return routineActivity;
-  } catch (error) {
-    console.error(error);
-  }
+
+async function attachActivitiesToRoutine(routines) {
+    
 }
 
 async function updateActivity({ id, ...fields }) {
@@ -112,7 +102,7 @@ module.exports = {
   getAllActivities,
   getActivityById,
   getActivityByName,
-  addActivityToRoutines,
+  attachActivitiesToRoutine,
   createActivity,
   updateActivity,
 };
