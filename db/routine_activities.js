@@ -1,4 +1,6 @@
 const client = require("./client");
+const {getRoutineById} = require("./routines");
+
 
 async function addActivityToRoutine({
   routineId,
@@ -35,9 +37,9 @@ async function getRoutineActivityById(id) {
 
 async function getRoutineActivitiesByRoutine({ id }) {
   try {
-    const { rows: [routineActivity] } = await client.query(`
+    const { rows: routineActivity } = await client.query(`
     SELECT * FROM routine_activities
-    WHERE id=$1
+    WHERE "routineId"=$1
     `, [id])
     return routineActivity;
 
@@ -47,11 +49,61 @@ async function getRoutineActivitiesByRoutine({ id }) {
   }
 }
 
-async function updateRoutineActivity({ id, ...fields }) {}
+async function updateRoutineActivity({ id, ...fields }) {
+  const {count, duration} = fields;
 
-async function destroyRoutineActivity(id) {}
+  try {
+    if (count !== undefined && duration !== undefined) {
+      const {rows: [routineActivity]} = await client.query(`
+        UPDATE routine_activities
+        SET count=$1, duration=$2
+        WHERE id=$3
+        RETURNING *
+      `, [count, duration, id]);
+      return routineActivity;
+    } else if (count !== undefined) {
+      const {rows: [routineActivity]} = await client.query(`
+        UPDATE routine_activities
+        SET count=$1
+        WHERE id=$2
+        RETURNING *
+      `, [count, id]);
+      return routineActivity;
+    } else if (duration !== undefined) {
+      const {rows: [routineActivity]} = await client.query(`
+        UPDATE aroutine_activities
+        SET duration=$1
+        WHERE id=$2
+        RETURNING *
+      `, [duration, id]);
+      return routineActivity;
+    }
+  } catch (error) {
+    console.error(error);
+  }
+}
 
-async function canEditRoutineActivity(routineActivityId, userId) {}
+async function destroyRoutineActivity(id) {
+  try {
+    const { rows: [routineActivity]} = await client.query(`
+    DELETE FROM routine_activities
+    WHERE id=$1
+    RETURNING *
+    ;`, [id])
+    return routineActivity;
+  } catch (error) {
+    console.error(error)
+  }
+}
+
+async function canEditRoutineActivity(routineActivityId, userId) {
+  const routineActivity = await getRoutineActivityById(routineActivityId);
+  const routineId = routineActivity.routineId;
+  const routine = await getRoutineById(routineId);
+  if (routine.creatorId === userId){
+    return true
+  }
+}
 
 module.exports = {
   getRoutineActivityById,
