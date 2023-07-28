@@ -1,11 +1,13 @@
 const client = require("./client");
-const {attachActivitiesToRoutine} = require("./activities");
+const {attachActivitiesToRoutine} = require('./activities.js')
+const {getUserByUsername} = require('./users.js')
 
 async function createRoutine({ creatorId, isPublic, name, goal }) {
   try {
     const { rows: [routine] } = await client.query(`
       INSERT INTO routines("creatorId", public, name, goal)
       VALUES($1, $2, $3, $4)
+      ON CONFLICT (name) DO NOTHING
       RETURNING *
     ;`, [creatorId, isPublic, name, goal])
     return routine;
@@ -41,76 +43,86 @@ async function getRoutinesWithoutActivities() {
 async function getAllRoutines() {
   try {
     const { rows: routines } = await client.query(`
-      SELECT * FROM routines
-    ;`)
-    const routinesWithActivities = await attachActivitiesToRoutine(routines);
+      SELECT routines.*, users.username AS "creatorName"
+      FROM routines
+      JOIN users
+      ON users.id = routines."creatorId"
+    `);
+
+    const routinesWithActivities = attachActivitiesToRoutine(routines);
     return routinesWithActivities;
   } catch (error) {
-    console.error(error)
+    console.log(error);
   }
 }
 
 async function getAllPublicRoutines() {
   try {
-    const { rows: routines } = await client.query(`
-      SELECT * FROM routines
-      WHERE public=$1
-    ;`, [true])
-    const routinesWithActivities = await attachActivitiesToRoutine(routines);
-    return routinesWithActivities;
+    const routines = await getAllRoutines();
+    const publicRoutines = routines.filter((routine)=> routine.public === true);
+    return publicRoutines;
   } catch (error) {
     console.error(error)
+    throw error;
   }
 }
 
 async function getAllRoutinesByUser({ username }) {
+  const user = await getUserByUsername(username);
+  console.log("USER FROM GETUSERBYUSERNAME", user);
+  const creatorId = user.id;
   try {
-    const { rows: routines } = await client.query(`
-    SELECT * FROM routines
-    WHERE username=$1 AND public=$2
-    ;`, [username, true])
-    const routinesWithActivities = await attachActivitiesToRoutines(routines);
-    return routinesWithActivities;
+    const routines = await getAllRoutines();
+    const routinesByUser = routines.filter((routine) => routine.creatorId === creatorId);
+    console.log("GET ALL ROUTINES BY USER", routinesByUser)
+    return routinesByUser;
   } catch (error) {
-    console.error(error)
+    console.log(error);
+    throw error;
   }
 }
 
 async function getPublicRoutinesByUser({ username }) {
-  try {
-    const { rows: routines } = await client.query(`
-    SELECT * FROM routines
-    WHERE username=$1 AND public=$2
-    ;`, [username, true])
-    return routines;
+  try{
+    const userRoutines = await getAllRoutinesByUser(username);
+    const publicRoutines = userRoutines.filter((routine)=> routine.public === true)
+    return publicRoutines;
   } catch (error) {
     console.error(error)
+    throw error;
   }
 }
 
 async function getPublicRoutinesByActivity({ id }) {
   try {
-    const { rows: routines } = await client.query(`
-    SELECT * FROM routines
-    WHERE "id"=$1 AND public=$2
-    ;`, [id, true])
-    return routines;
+    const routines = await getAllPublicRoutines();
+    const routineByActivity = routines.filter((routine)=>{
+      routine.activities.activityId === id
+    })
+    return routineByActivity;
   } catch (error) {
     console.error(error)
+    throw error;
   }
 }
 
 async function updateRoutine({ id, ...fields }) {
+  const placeholders = Object.keys(fields).map((key, index) => `"${key}"=$${index + 1}`).join(", ");
+
+  if (placeholders.length === 0) {
+    return;
+  }
   try {
-    const { rows: [routine] } = await client.query(`
+    const {rows: [routine],} = await client.query(`
     UPDATE routines
-    SET name=$1, goal=$2
-    WHERE id=$3
-    RETURNING *
-    ;`, [fields.name, fields.goal, id])
+    SET ${placeholders}
+    WHERE id=${id}
+    RETURNING *;
+  `,Object.values(fields));
+
     return routine;
   } catch (error) {
-    console.error(error)
+    console.log(error);
   }
 }
 

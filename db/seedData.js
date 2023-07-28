@@ -2,6 +2,7 @@
 const { createUser } = require('./users.js');
 const { createRoutine, getRoutinesWithoutActivities } = require('./routines.js');
 const { getAllActivities, createActivity } = require('./activities.js');
+const {addActivityToRoutine} = require('./routine_activities.js')
 
 
 const client = require("./client")

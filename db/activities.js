@@ -10,8 +10,6 @@ async function createActivity({ name, description }) {
       ON CONFLICT (name) DO NOTHING
       RETURNING *
     `, [name, description]);
-
-    console.log(activity);
     return activity;
   } catch (error) {
     console.error(error);
@@ -23,7 +21,6 @@ async function getAllActivities() {
   try {
     const { rows: activities } = await client.query(`
     SELECT * FROM activities`)
-    console.log("GET ALL ACTIVITIES: ", activities)
     return activities;
   } catch (error) {
     console.error(error);
@@ -59,26 +56,30 @@ async function getActivityByName(name) {
 // used as a helper inside db/routines.js
 
 async function attachActivitiesToRoutine(routines) {
-  const routinesToMap = [...routines];
-  const placeholders = routines.map((_, index) => `$${index + 1}`).join(", ");
-  const routineIds = routines.map((routine) => routine.id);
-  if (!routineIds.length){
-    return
+  try{
+    const routineIds = routines.map((routine) => routine.id);
+    const { rows: routineActivities } = await client.query(
+      `
+      SELECT activities.*, routine_activities.duration, routine_activities.count, routine_activities.id AS "routineActivityId", routine_activities."routineId"
+      FROM activities
+      JOIN routine_activities
+      ON routine_activities."activityId" = activities.id
+      WHERE routine_activities."routineId" 
+      IN (${routineIds})
+    `);
+
+    const routinesWithActivities =  routines.map((routine) => {
+      routine.activities = routineActivities.filter(
+        (routineActivity) => routineActivity.routineId === routine.id);
+        return routine;
+    });
+
+    return routinesWithActivities;
+
+  } catch (error) {
+    console.error(error)
+    throw error;
   }
-  const {rows: activities} = await client.query(`
-  SELECT activities.*, routine_activities.duration, routine_activities.count, routine_activities.id
-  FROM activities
-  JOIN routine_activities ON routine_activities."activityId" = activities.id
-  WHERE routine_activites."routineId" IN (${placeholders});
-  `, [routineIds]);
-  routinesToMap.map((routine)=>{
-    routine.activities = activities.filter(
-      (activity) => activity.routineId === routine.id
-    );
-  })
-  console.log(activities)
-  console.log(routinesToMap)
-  return routinesToMap;
 }
 
 async function updateActivity({ id, ...fields }) {

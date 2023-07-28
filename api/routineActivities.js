@@ -1,5 +1,11 @@
 const express = require('express');
 const router = express.Router();
+const {
+  getRoutineActivityById,
+  destroyRoutineActivity,
+  getRoutineById,
+  updateRoutineActivity,
+} = require("../db");
 
 // PATCH /api/routine_activities/:routineActivityId
 

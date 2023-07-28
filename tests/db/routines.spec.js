@@ -152,7 +152,7 @@ describe("DB Routines", () => {
       expectRoutinesToContainRoutine(routines, fakePrivateRoutine);
     });
 
-    it.only("includes their activities", async () => {
+    it("includes their activities", async () => {
       const routines = await getAllRoutines();
       const routine = routines.find((routine) => routine.id === fakeRoutine.id);
       expectRoutineToContainActivity(routine, fakeActivity);
@@ -300,6 +300,7 @@ describe("DB Routines", () => {
   describe("getPublicRoutinesByUser", () => {
     it("should include the public routine", async () => {
       const routines = await getPublicRoutinesByUser(fakeUser);
+      console.log(routines);
       expectRoutinesToContainRoutine(routines, fakeRoutine);
     });
 
@@ -433,12 +434,12 @@ describe("DB Routines", () => {
 
       const updatedRoutine = await updateRoutine({
         id: fakeRoutine.id,
-        isPublic: false,
+        public: false,
         name,
         goal,
       });
 
-      expect(updatedRoutine.isPublic).toBe(false);
+      expect(updatedRoutine.public).toBe(false);
       expect(updatedRoutine.name).toBe(name);
       expect(updatedRoutine.goal).toBe(goal);
     });
@@ -450,7 +451,7 @@ describe("DB Routines", () => {
         id: fakeRoutine.id,
         name,
       });
-      expect(updatedRoutine.isPublic).toBe(fakeRoutine.isPublic);
+      expect(updatedRoutine.public).toBe(fakeRoutine.public);
       expect(updatedRoutine.name).toBe(name);
       expect(updatedRoutine.goal).toBe(fakeRoutine.goal);
     });
