@@ -52,7 +52,7 @@ async function getAllRoutines() {
     const routinesWithActivities = attachActivitiesToRoutine(routines);
     return routinesWithActivities;
   } catch (error) {
-    console.log(error);
+    console.error(error);
   }
 }
 
@@ -69,22 +69,20 @@ async function getAllPublicRoutines() {
 
 async function getAllRoutinesByUser({ username }) {
   const user = await getUserByUsername(username);
-  console.log("USER FROM GETUSERBYUSERNAME", user);
   const creatorId = user.id;
   try {
     const routines = await getAllRoutines();
     const routinesByUser = routines.filter((routine) => routine.creatorId === creatorId);
-    console.log("GET ALL ROUTINES BY USER", routinesByUser)
     return routinesByUser;
   } catch (error) {
-    console.log(error);
+    console.error(error);
     throw error;
   }
 }
 
 async function getPublicRoutinesByUser({ username }) {
   try{
-    const userRoutines = await getAllRoutinesByUser(username);
+    const userRoutines = await getAllRoutinesByUser({username});
     const publicRoutines = userRoutines.filter((routine)=> routine.public === true)
     return publicRoutines;
   } catch (error) {
@@ -96,13 +94,14 @@ async function getPublicRoutinesByUser({ username }) {
 async function getPublicRoutinesByActivity({ id }) {
   try {
     const routines = await getAllPublicRoutines();
-    const routineByActivity = routines.filter((routine)=>{
-      routine.activities.activityId === id
-    })
+    const routineByActivity = routines.filter((routine) => {
+      return routine.activities.some(
+        (activity) => activity.id === id
+      );
+    });
     return routineByActivity;
   } catch (error) {
-    console.error(error)
-    throw error;
+    console.log(error);
   }
 }
 
@@ -113,16 +112,16 @@ async function updateRoutine({ id, ...fields }) {
     return;
   }
   try {
-    const {rows: [routine],} = await client.query(`
+    const {rows: [routine]} = await client.query(`
     UPDATE routines
     SET ${placeholders}
     WHERE id=${id}
     RETURNING *;
   `,Object.values(fields));
-
+  console.log("We named the column 'public' not isPublic which I think is causing this error")
     return routine;
   } catch (error) {
-    console.log(error);
+    console.error(error);
   }
 }
 
@@ -138,7 +137,7 @@ async function destroyRoutine(id) {
     WHERE id=$1;
     `, [id]);
   } catch (error) {
-    console.log(error);
+    console.error(error);
   }
 }
 

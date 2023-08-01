@@ -2,10 +2,11 @@ require("dotenv").config();
 const cors = require("cors");
 const express = require("express");
 const app = express();
-const { client } = require("./db");
+const client = require("./db/client");
 const morgan = require("morgan");
 
 // Setup your Middleware and API Router here
+
 app.use(cors());
 client.connect();
 
