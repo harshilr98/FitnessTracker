@@ -16,11 +16,12 @@ activitiesRouter.get("/:activityId/routines", async (req, res, next) => {
   const activity = await getActivityById(activityId);
   try {
     if (!activity) {
-      next({
+      res.send({
         error: "ActivityNotFoundError",
         message: `Activity ${activityId} not found`,
         name: "ActivityNotFoundError",
       });
+      res.status(404);
     } else {
       const routines = await getPublicRoutinesByActivity(activity);
       res.send(routines);
@@ -48,7 +49,7 @@ activitiesRouter.post("/", async (req, res, next) => {
     const { name, description } = req.body;
     const activity = await getActivityByName(name);
     if (activity) {
-      next({
+      res.send({
         error: "Error",
         message: `An activity with name ${name} already exists`,
         name: "Error",
@@ -70,7 +71,7 @@ activitiesRouter.patch("/:activityId", async (req, res, next) => {
   const activity = await getActivityById(activityId);
   try {
     if (!activity) {
-      next({
+      res.send({
         error: "Error",
         message: `Activity ${activityId} not found`,
         name: "Error",
@@ -79,7 +80,7 @@ activitiesRouter.patch("/:activityId", async (req, res, next) => {
 
     const existingActivity = await getActivityByName(name);
     if (existingActivity && existingActivity.id !== activityId) {
-      next({
+      res.send({
         error: "Error",
         message: `An activity with name ${name} already exists`,
         name: "Error",
