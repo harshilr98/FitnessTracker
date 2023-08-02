@@ -1,5 +1,6 @@
 const express = require("express");
 const routineActivitiesRouter = express.Router();
+const jwt = require("jsonwebtoken");
 const {
   getRoutineActivityById,
   destroyRoutineActivity,

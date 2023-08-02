@@ -9,6 +9,7 @@ const {
   getActivityByName,
 } = require("../db");
 
+
 // GET /api/activities/:activityId/routines
 
 activitiesRouter.get("/:activityId/routines", async (req, res, next) => {
